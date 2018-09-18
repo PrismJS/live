@@ -11,7 +11,7 @@ if (!window.Bliss) {
 
 	let bliss = document.createElement("script");
 	bliss.src = "https://blissfuljs.com/bliss.shy.min.js";
-	head.appendChild(bliss);
+	document.head.appendChild(bliss);
 
 	await new Promise(resolve => bliss.onload = resolve);
 }
