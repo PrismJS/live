@@ -90,9 +90,15 @@ var _ = Prism.Live = class PrismLive {
 		var cs = getComputedStyle(this.pre);
 
 		// Copy styles from <pre> to textarea
-		$.style(this.textarea, $.extend({
-			caretColor: cs.color
-		}, cs, /^(font|lineHeight|padding)|[tT]abSize/gi));
+		this.textarea.style.caretColor = cs.color;
+
+		var properties = /^(font|lineHeight|padding)|[tT]abSize/gi;
+
+		for (var prop in cs) {
+			if (cs[prop] && prop in this.textarea.style && !this.textarea.style[prop]  && properties.test(prop)) {
+				this.textarea.style[prop] = cs[prop];
+			}
+		}
 
 		var sourceCS = getComputedStyle(this.source);
 		this.pre.style.height = this.source.style.height || sourceCS.getPropertyValue("--height");
