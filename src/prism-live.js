@@ -112,6 +112,17 @@ var _ = Prism.Live = class PrismLive {
 		}
 
 		$.bind(this.textarea, {
+			"mouseup mouseout": evt => {
+				const {offsetWidth, offsetHeight} = evt.target;
+				if (offsetWidth !== evt.x || offsetHeight !== evt.y) {
+					this.pre.style.height = offsetHeight + 'px';
+					this.pre.style.width = offsetWidth + 'px';
+
+					this.wrapper.style.height = offsetHeight + 'px';
+					this.wrapper.style.width = offsetWidth + 'px';
+				}
+			},
+			
 			input: evt => this.update(),
 
 			keyup: evt => {
