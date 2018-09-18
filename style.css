@@ -1,3 +1,48 @@
 body {
+	margin: 0;
+	font: 100%/1.5 Geneva, Segoe UI, Helvetica, sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+	font-family: Didot, "Didot LT STD", Bodoni MT, "Hoefler Text", Garamond, "Times New Roman", serif
+}
+
+header {
+	padding: 1em;
+	margin-top: 0;
+	background: black;
+
+	background-image: conic-gradient(from 98deg at 50% 25%, red,
+		hsl(55, 90%, 50%), hsl(80, 80%, 50%), hsl(180, 80%, 50%), hsl(220, 90%, 50%), purple,
+		transparent 5%, transparent 44%, white 0, white 45%, transparent 0);
+	color: white;
+	text-align: center;
+}
+
+	header h1 {
+		margin: 0 auto;
+		width: min-content;
+		text-transform: uppercase;
+		font-size: 220%;
+	}
+
+		header h1 img {
+			display: block;
+			width: 5em;
+		}
+
+	header h2 {
+		margin: .5em 0 0;
+		font-size: 100%;
+		color: hsl(80, 80%, 50%);
+		font-family: inherit;
+	}
+
+main {
 	padding: 1em calc(50vw - 500px);
+}
+
+footer {
+	margin-top: 1em;
+	color: gray;
 }

@@ -19,7 +19,7 @@
 
 <header>
 	<h1>
-		Prism Live!
+		<img src="https://prismjs.com/logo.svg" alt="Prism"> Live!
 	</h1>
 	<h2>
 		Lightweight, extensible, powerful web-based code editor
@@ -39,10 +39,46 @@
 		<h3>Height grows up to specific max height</h3>
 		<textarea class="prism-live language-html" style="--max-height: 30em"></textarea>
 	</section>
+	<section>
+		<h2>Including the library</h2>
+
+		<p>You will need to include Prism before including Prism Live.
+			You will also need to include Bliss, though if you don’t it will be loaded dynamically.
+			You can either manually include <code>prism-live.css</code>, <code>prism-live.js</code> and any language components,
+			or you can use the built-in dynamic loader and just include <code>prism-live.js</code> with a <code>load</code> parameter
+			about which components to include.
+		</p>
+		<p>For example, to include definitions for CSS, HTML, and JS:</p>
+		<pre class="language-html"><code>&lt;script src="prism-live.js?load=css,html,javascript">&lt;/script></code></pre>
+		<p>Using the <code>load</code> parameter also automatically includes <code>prism-live.css</code>, regardless of the value.</p>
+	</section>
+	<section>
+		<h2>Initialization</h2>
+
+		<h3>Via a <code>&lt;textarea></code></h3>
+
+		<p>If the primary use case is editing, it makes sense to intialize from a <code>&lt;textarea></code>,
+			so that the code is still editable, even if the JavaScript fails to load.
+			Just include a <code class="language-markup">&lt;textarea class="prism-live language-xxx"></code> in your HTML.
+			It will automatically be initialized, with the contents of the textarea as the code.</p>
+
+		<h3>Via a <code>&lt;pre>&lt;code></code></h3>
+
+		<p>If the primary use case is displaying code, it makes sense to initialize from a <code>&lt;pre>&lt;code></code>, same as the one you'd write for using Prism.
+		Just use a class of <code>prism-live</code> on it, and Prism Live will take care of the rest.</p>
+	</section>
+	<section>
+		<h2>Customization</h2>
+
+		<p>The editor consists of three elements, all with the class <code>prism-live</code>: A <code>&lt;textarea></code>, a <code>&lt;pre></code> after it, and a <code>&lt;div></code> that wraps both.</p>
+		<p>In many cases, just applying CSS to <code>pre.prism-live</code> or <code>div.prism-live</code> should work.</p>
+		<p>For setting a height or maximum height on the editor, either set them on the <code>&lt;pre></code> (if using that as a source), or set <code>--height</code> or <code>--max-height</code> respectively on the <code>&lt;textarea></code></p>
+		<p>There are also <code>--selection-background</code> and <code>--selection-color</code> properties available on the <code>&lt;textarea></code></p>
+	</section>
 </main>
 
 <footer>
-
+	Made by <a href="http://lea.verou.me">Lea Verou</a>, currently a work in progress.
 </footer>
 
 <script src="https://blissfuljs.com/bliss.shy.min.js"></script>

@@ -1,8 +1,6 @@
 div.prism-live {
 	position: relative;
 	box-sizing: border-box;
-	font-size: 100%;
-	line-height: 1.5;
 }
 
 textarea.prism-live,
@@ -10,11 +8,6 @@ pre.prism-live {
 	padding: .2rem 2rem;
 	box-sizing: border-box;
 	margin: 0;
-
-	/* These are !important because if they are not in sync the editor will misbehave BADLY.
-	 * If you want to customize font metrics, set them on the parent. */
-	font-size: inherit !important;
-	line-height: inherit !important;
 }
 
 textarea.prism-live {
