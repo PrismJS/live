@@ -38,7 +38,8 @@ header {
 		font-family: inherit;
 	}
 
-main {
+main,
+footer {
 	padding: 1em calc(50vw - 500px);
 }
 
