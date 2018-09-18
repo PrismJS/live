@@ -94,10 +94,9 @@ var _ = Prism.Live = class PrismLive {
 			caretColor: cs.color
 		}, cs, /^(font|lineHeight|padding)|[tT]abSize/gi));
 
-		var fixedHeight = getComputedStyle(this.source).getPropertyValue("--height");
-		if (fixedHeight) {
-			this.wrapper.style.height = fixedHeight;
-		}
+		var sourceCS = getComputedStyle(this.source);
+		this.pre.style.height = this.source.style.height || sourceCS.getPropertyValue("--height");
+		this.pre.style.maxHeight = this.source.style.maxHeight || sourceCS.getPropertyValue("--max-height");
 
 		this.update();
 
