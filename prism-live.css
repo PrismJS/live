@@ -23,6 +23,7 @@ textarea.prism-live {
 	border: 0;
 	outline: none;
 	background: transparent;
+	resize: none;
 	--selection-background: hsl(320, 80%, 25%);
 	--selection-color: white;
 }
