@@ -95,7 +95,7 @@ var _ = Prism.Live = class PrismLive {
 		var properties = /^(font|lineHeight|padding)|[tT]abSize/gi;
 
 		for (var prop in cs) {
-			if (cs[prop] && prop in this.textarea.style && !this.textarea.style[prop]  && properties.test(prop)) {
+			if (cs[prop] && prop in this.textarea.style && properties.test(prop)) {
 				this.textarea.style[prop] = cs[prop];
 			}
 		}
