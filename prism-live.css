@@ -18,6 +18,7 @@ textarea.prism-live {
 	height: 100%;
 	z-index: 1;
 	color: transparent;
+	/* color: hsla(0,0%,100%,.4); */
 	cursor: text;
 	white-space: pre;
 	border: 0;
@@ -52,6 +53,9 @@ pre.prism-live {
 	pointer-events: none;
 	overflow: hidden;
 	max-height: 100%;
+	--scrollbar-width: 17px;
+	padding-bottom: var(--scrollbar-width);
+	padding-right: var(--scrollbar-width);
 }
 
 	pre.prism-live > code:empty::before {

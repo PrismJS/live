@@ -17,35 +17,21 @@ if (!window.Bliss) {
 }
 
 var $ = Bliss, $$ = Bliss.$;
-var componentsLoaded = Promise.resolve();
+var ready = Promise.resolve();
 
 if (document.currentScript) {
 	// Tiny dynamic loader. Use e.g. ?load=css,markup,javascript to load components
 	var base = document.currentScript.src;
 	var load = new URL(base).searchParams.get("load");
 
-	if (load) {
+	if (load !== null) {
 		var files = ["../prism-live.css"];
-		files.push(...load.split(/,/).map(c => /\./.test(c)? c : `prism-live-${c}.js`));
 
-		componentsLoaded = Promise.all(files.map(url => {
-			url = new URL(url, base);
+		if (load) {
+			files.push(...load.split(/,/).map(c => /\./.test(c)? c : `prism-live-${c}.js`));
+		}
 
-			if (/\.css$/.test(url.pathname)) {
-				// CSS file
-				$.create("link", {
-					"href": url,
-					"rel": "stylesheet",
-					"inside": document.head
-				});
-
-				// No need to wait for stylesheets
-				return Promise.resolve();
-			}
-
-			// JS file
-			return $.include(url);
-		}));
+		ready = Promise.all(files.map(url => $.load(url, base)));
 	}
 }
 
@@ -86,28 +72,9 @@ var _ = Prism.Live = class PrismLive {
 		this.pre.classList.add("prism-live");
 		this.textarea.classList.add("prism-live");
 
-		// Copy pre metrics over to textarea
-		var cs = getComputedStyle(this.pre);
-
-		// Copy styles from <pre> to textarea
-		this.textarea.style.caretColor = cs.color;
-
-		var properties = /^(font|lineHeight|padding)|[tT]abSize/gi;
-
-		for (var prop in cs) {
-			if (cs[prop] && prop in this.textarea.style && properties.test(prop)) {
-				this.textarea.style[prop] = cs[prop];
-			}
-		}
-
-		var sourceCS = getComputedStyle(this.source);
-		this.pre.style.height = this.source.style.height || sourceCS.getPropertyValue("--height");
-		this.pre.style.maxHeight = this.source.style.maxHeight || sourceCS.getPropertyValue("--max-height");
-
-		this.update();
-
 		if (self.Incrementable) {
 			// TODO data-* attribute for modifier
+			// TODO load dynamically if not present
 			new Incrementable(this.textarea);
 		}
 
@@ -202,9 +169,27 @@ var _ = Prism.Live = class PrismLive {
 			}
 		});
 
-		this.textarea.addEventListener("scroll", evt => {
+		// this.syncScroll();
+		this.textarea.addEventListener("scroll", this, {passive: true});
+
+		$.bind(window, {
+			"resize": evt => this.syncStyles()
+		});
+
+		// Copy styles with a delay
+		requestAnimationFrame(() => {
+			this.syncStyles();
+
+			var sourceCS = getComputedStyle(this.source);
+			this.pre.style.height = this.source.style.height || sourceCS.getPropertyValue("--height");
+			this.pre.style.maxHeight = this.source.style.maxHeight || sourceCS.getPropertyValue("--max-height");
+		});
+	}
+
+	handleEvent(evt) {
+		if (evt.type === "scroll") {
 			this.syncScroll();
-		}, {passive: true});
+		}
 	}
 
 	expandSnippet(text) {
@@ -317,7 +302,29 @@ var _ = Prism.Live = class PrismLive {
 		Prism.highlightElement(this.code);
 	}
 
+	syncStyles() {
+		// Copy pre metrics over to textarea
+		var cs = getComputedStyle(this.pre);
+
+		// Copy styles from <pre> to textarea
+		this.textarea.style.caretColor = cs.color;
+
+		var properties = /^(font|lineHeight|paddingLeft|paddingTop)|[tT]abSize/gi;
+
+		for (var prop in cs) {
+			if (cs[prop] && prop in this.textarea.style && properties.test(prop)) {
+				this.textarea.style[prop] = cs[prop];
+			}
+		}
+
+		this.update();
+	}
+
 	syncScroll() {
+		if (this.pre.clientWidth === 0 && this.pre.clientHeight === 0) {
+			return;
+		}
+
 		this.pre.scrollTop = this.textarea.scrollTop;
 		this.pre.scrollLeft = this.textarea.scrollLeft;
 	}
@@ -637,7 +644,7 @@ var _ = Prism.Live = class PrismLive {
 // Static properties
 Object.assign(_, {
 	all: new WeakMap(),
-	componentsLoaded,
+	ready,
 	DEFAULT_INDENT: "\t",
 	CARET_INDICATOR: /(^|[^\\])\$(\d+)/g,
 	snippets: {
