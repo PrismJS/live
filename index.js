@@ -2,8 +2,25 @@
  * JS for Prism Live’s page, not part of the actual editor
  */
 
-(function($, $$) {
+(async function($, $$) {
 
 $$("textarea.language-html").forEach(t => t.value = document.head.outerHTML);
+
+var css = await fetch("prism-live.css");
+css = await css.text();
+
+$$("textarea.language-css").forEach(t => {
+	t.value = css;
+	t.dispatchEvent(new InputEvent("input"));
+});
+
+var js = await fetch("src/prism-live.js");
+js = await js.text();
+
+$$("textarea.language-js").forEach(t => {
+	t.value = js;
+	t.dispatchEvent(new InputEvent("input"));
+});
+
 
 })(Bliss, Bliss.$);

@@ -1,6 +1,8 @@
 div.prism-live {
 	position: relative;
 	box-sizing: border-box;
+	display: flex;
+	flex-flow: column;
 }
 
 textarea.prism-live,
@@ -26,7 +28,7 @@ textarea.prism-live {
 	background: transparent;
 	resize: none;
 	--selection-background: hsl(320, 80%, 25%);
-	--selection-color: white;
+	--selection-color: hsla(0, 0%, 100%, .8);
 }
 
 @supports (not (caret-color: black)) and (-webkit-text-fill-color: black) {
@@ -49,6 +51,7 @@ textarea.prism-live {
 	}
 
 pre.prism-live {
+	flex: 1;
 	position: relative;
 	pointer-events: none;
 	overflow: hidden;

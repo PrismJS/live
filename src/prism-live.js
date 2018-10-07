@@ -39,8 +39,6 @@ var superKey = navigator.platform.indexOf("Mac") === 0? "metaKey" : "ctrlKey";
 
 var _ = Prism.Live = class PrismLive {
 	constructor(source) {
-		_.all.set(source, this);
-
 		this.source = source;
 		this.sourceType = source.nodeName.toLowerCase();
 
@@ -68,6 +66,10 @@ var _ = Prism.Live = class PrismLive {
 				after: this.pre
 			});
 		}
+
+		_.all.set(this.textarea, this);
+		_.all.set(this.pre, this);
+		_.all.set(this.code, this);
 
 		this.pre.classList.add("prism-live");
 		this.textarea.classList.add("prism-live");
@@ -184,6 +186,9 @@ var _ = Prism.Live = class PrismLive {
 			this.pre.style.height = this.source.style.height || sourceCS.getPropertyValue("--height");
 			this.pre.style.maxHeight = this.source.style.maxHeight || sourceCS.getPropertyValue("--max-height");
 		});
+
+		this.update();
+		this.lang = this.code.className.match(/lang(?:uage)?-(\w+)/i)[1];
 	}
 
 	handleEvent(evt) {
@@ -277,7 +282,7 @@ var _ = Prism.Live = class PrismLive {
 	}
 
 	// Current language at caret position
-	get lang() {
+	get currentLanguage() {
 		var node = this.getNode();
 		node = node? node.parentNode : this.code;
 		var lang = _.match(node.closest('[class*="language-"]').className, /language-(\w+)/, 1);
@@ -286,7 +291,7 @@ var _ = Prism.Live = class PrismLive {
 
 	// Get settings based on current language
 	get context() {
-		var lang = this.lang;
+		var lang = this.currentLanguage;
 		return _.languages[lang] || _.languages.DEFAULT;
 	}
 
