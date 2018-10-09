@@ -505,12 +505,21 @@ var _ = Prism.Live = class PrismLive {
 			// Remove comment
 			var start = this.getOffset(commentNode);
 			var commentText = commentNode.textContent;
-			var end = start + commentText.length - comments[1].length;
-			this.set(this.value.slice(start + comments[0].length, end), {start, end: end + comments[1].length});
+
+			if (comments.singleline && commentText.indexOf(comments.singleLine) === 0) {
+				// TODO
+			}
+			else {
+				comments = comments.multiline || comments;
+				var end = start + commentText.length - comments[1].length;
+				this.set(this.value.slice(start + comments[0].length, end), {start, end: end + comments[1].length});
+			}
 		}
 		else {
 			// Not inside comment, add
 			if (this.hasSelection) {
+				comments = comments.multiline || comments;
+
 				this.wrapSelection({
 					before: comments[0],
 					after: comments[1]
@@ -519,6 +528,7 @@ var _ = Prism.Live = class PrismLive {
 			else {
 				// No selection, wrap line
 				// FIXME *inside indent*
+				comments = comments.singleline? [comments.singleline, "\n"] : comments.multiline || comments;
 				end = this.afterCaretIndex("\n");
 				this.wrap({
 					before: comments[0],
