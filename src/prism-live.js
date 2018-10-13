@@ -418,29 +418,39 @@ var _ = Prism.Live = class PrismLive {
 
 	// Replace currently selected text
 	replace(text) {
-		var hadSelection = this.hasSelection;
-
-		document.execCommand("insertText", false, text);
-
-		if (hadSelection) {
-			// By default inserText places the caret at the end, losing any selection
-			// What we want instead is the replaced text to be selected
-			this.selectionStart = this.selectionEnd - text.length;
+		if (_.supportsExecCommand) {
+			var hadSelection = this.hasSelection;
+			document.execCommand("insertText", false, text);
+			if (hadSelection) {
+				// By default inserText places the caret at the end, losing any selection
+				// What we want instead is the replaced text to be selected
+				this.selectionStart = this.selectionEnd - text.length;
+			}
+		}
+		else {
+			this.textarea.setRangeText(text);
+			this.update();
 		}
 	}
 
 	// Set text between indexes and restore caret position
 	set(text, {start, end} = {}) {
-		var ss = this.selectionStart;
-		var se = this.selectionEnd;
+		if (_.supportsExecCommand) {
+			var ss = this.selectionStart;
+			var se = this.selectionEnd;
 
-		this.selectionStart = start;
-		this.selectionEnd = end;
+			this.selectionStart = start;
+			this.selectionEnd = end;
 
-		document.execCommand("insertText", false, text);
+			document.execCommand("insertText", false, text);
 
-		this.selectionStart = ss;
-		this.selectionEnd = se;
+			this.selectionStart = ss;
+			this.selectionEnd = se;
+		}
+		else {
+			this.textarea.setRangeText(text);
+			this.update();
+		}
 	}
 
 	/**
@@ -723,6 +733,11 @@ Object.assign(_, {
 });
 
 $.ready().then(() => {
+	var t = $.create("textarea", {inside: document.body});
+	t.focus();
+	document.execCommand("insertText", false, "a");
+	_.supportsExecCommand = !!t.value;
+
 	$$(":not(.prism-live) > textarea.prism-live").forEach(textarea => {
 		if (!_.all.get(textarea)) {
 			new _(textarea);
