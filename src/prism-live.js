@@ -737,6 +737,7 @@ $.ready().then(() => {
 	t.focus();
 	document.execCommand("insertText", false, "a");
 	_.supportsExecCommand = !!t.value;
+	t.remove();
 
 	$$(":not(.prism-live) > textarea.prism-live").forEach(textarea => {
 		if (!_.all.get(textarea)) {
