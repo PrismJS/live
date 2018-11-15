@@ -183,6 +183,7 @@ var _ = Prism.Live = class PrismLive {
 			this.syncStyles();
 
 			var sourceCS = getComputedStyle(this.source);
+
 			this.pre.style.height = this.source.style.height || sourceCS.getPropertyValue("--height");
 			this.pre.style.maxHeight = this.source.style.maxHeight || sourceCS.getPropertyValue("--max-height");
 		});
@@ -314,13 +315,17 @@ var _ = Prism.Live = class PrismLive {
 		// Copy styles from <pre> to textarea
 		this.textarea.style.caretColor = cs.color;
 
-		var properties = /^(font|lineHeight|paddingLeft|paddingTop)|[tT]abSize/gi;
+		var properties = /^(font|lineHeight)|[tT]abSize/gi;
 
 		for (var prop in cs) {
 			if (cs[prop] && prop in this.textarea.style && properties.test(prop)) {
-				this.textarea.style[prop] = cs[prop];
+				this.wrapper.style[prop] = cs[prop];
+				this.textarea.style[prop] = this.pre.style[prop] = "inherit";
 			}
 		}
+
+		this.textarea.style.paddingLeft = cs.paddingLeft;
+		this.textarea.style.paddingTop = cs.paddingTop;
 
 		this.update();
 	}
