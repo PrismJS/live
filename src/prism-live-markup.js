@@ -37,7 +37,6 @@ _.registerLanguage("markup", {
 				var id = _.match(selector, /#([\w-]+)/, 1);
 
 				if (id) {
-					id = id[1];
 					html += ` id="${id}"`;
 				}
 
