@@ -329,8 +329,8 @@ var _ = Prism.Live = class PrismLive {
 		this.unobserve();
 		this.code.textContent = code;
 		this.observe();
-console.log(this.code.innerHTML);
-		// Prism.highlightElement(this.code);
+
+		Prism.highlightElement(this.code);
 	}
 
 	syncStyles() {
