@@ -20,7 +20,7 @@ textarea.prism-live {
 	height: 100%;
 	z-index: 1;
 	color: transparent;
-	/* color: hsla(0,0%,100%,.4); */
+	/* color: hsla(0,0%,50%,.4); */
 	cursor: text;
 	white-space: pre;
 	border: 0;

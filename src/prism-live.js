@@ -59,6 +59,8 @@ var _ = Prism.Live = class PrismLive {
 		}
 		else {
 			this.pre = this.source;
+			// this.pre.classList.add("no-whitespace-normalization");
+			this.code = $("code", this.pre);
 
 			this.textarea = $.create("textarea", {
 				className: this.pre.className,
@@ -73,6 +75,7 @@ var _ = Prism.Live = class PrismLive {
 
 		this.pre.classList.add("prism-live");
 		this.textarea.classList.add("prism-live");
+		this.source.classList.add("prism-live-source");
 
 		if (self.Incrementable) {
 			// TODO data-* attribute for modifier
@@ -189,13 +192,33 @@ var _ = Prism.Live = class PrismLive {
 		});
 
 		this.update();
-		this.lang = this.code.className.match(/lang(?:uage)?-(\w+)/i)[1];
+		this.lang = (this.code.className.match(/lang(?:uage)?-(\w+)/i) || [,])[1];
+
+		this.observer = new MutationObserver(r => {
+			this.textarea.value = this.pre.textContent;
+		});
+
+		this.observe();
+
+		this.source.dispatchEvent(new CustomEvent("prism-live-init", {bubbles: true, detail: this}));
 	}
 
 	handleEvent(evt) {
 		if (evt.type === "scroll") {
 			this.syncScroll();
 		}
+	}
+
+	observe () {
+		return this.observer && this.observer.observe(this.pre, {
+			childList: true,
+			subtree: true,
+			characterData: true
+		});
+	}
+
+	unobserve () {
+		this.observer && this.observer.disconnect();
 	}
 
 	expandSnippet(text) {
@@ -296,16 +319,18 @@ var _ = Prism.Live = class PrismLive {
 		return _.languages[lang] || _.languages.DEFAULT;
 	}
 
-	update() {
+	update () {
 		var code = this.value;
 
 		if (/\n$/.test(this.value)) {
 			code += "\u200b";
 		}
 
+		this.unobserve();
 		this.code.textContent = code;
-
-		Prism.highlightElement(this.code);
+		this.observe();
+console.log(this.code.innerHTML);
+		// Prism.highlightElement(this.code);
 	}
 
 	syncStyles() {
@@ -323,9 +348,6 @@ var _ = Prism.Live = class PrismLive {
 				this.textarea.style[prop] = this.pre.style[prop] = "inherit";
 			}
 		}
-
-		this.textarea.style.paddingLeft = cs.paddingLeft;
-		this.textarea.style.paddingTop = cs.paddingTop;
 
 		this.update();
 	}
@@ -744,9 +766,9 @@ $.ready().then(() => {
 	_.supportsExecCommand = !!t.value;
 	t.remove();
 
-	$$(":not(.prism-live) > textarea.prism-live").forEach(textarea => {
-		if (!_.all.get(textarea)) {
-			new _(textarea);
+	$$(":not(.prism-live) > textarea.prism-live, :not(.prism-live) > pre.prism-live").forEach(source => {
+		if (!_.all.get(source)) {
+			new _(source);
 		}
 	});
 });

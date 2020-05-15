@@ -4,12 +4,12 @@
 
 (async function($, $$) {
 
-$$("textarea.language-html").forEach(t => t.value = document.head.outerHTML);
+$$("textarea.language-html.fill").forEach(t => t.value = document.head.outerHTML);
 
 var css = await fetch("prism-live.css");
 css = await css.text();
 
-$$("textarea.language-css").forEach(t => {
+$$("textarea.language-css.fill").forEach(t => {
 	t.value = css;
 	t.dispatchEvent(new InputEvent("input"));
 });
@@ -17,7 +17,7 @@ $$("textarea.language-css").forEach(t => {
 var js = await fetch("src/prism-live.js");
 js = await js.text();
 
-$$("textarea.language-js").forEach(t => {
+$$("textarea.language-js.fill").forEach(t => {
 	t.value = js;
 	t.dispatchEvent(new InputEvent("input"));
 });
