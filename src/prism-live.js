@@ -328,7 +328,10 @@ var _ = Prism.Live = class PrismLive {
 
 		this.unobserve();
 		this.code.textContent = code;
-		this.observe();
+
+		requestAnimationFrame(() => {
+			this.observe();
+		});
 
 		Prism.highlightElement(this.code);
 	}
