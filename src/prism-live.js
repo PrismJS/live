@@ -759,13 +759,16 @@ Object.assign(_, {
 	})()
 });
 
-$.ready().then(() => {
+$.lazy(_, "supportsExecCommand", () => {
 	var t = $.create("textarea", {inside: document.body});
 	t.focus();
 	document.execCommand("insertText", false, "a");
-	_.supportsExecCommand = !!t.value;
+	var ret = !!t.value;
 	t.remove();
+	return ret;
+});
 
+$.ready().then(() => {
 	$$(":not(.prism-live) > textarea.prism-live, :not(.prism-live) > pre.prism-live").forEach(source => {
 		if (!_.all.get(source)) {
 			new _(source);
