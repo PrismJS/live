@@ -195,7 +195,9 @@ var _ = Prism.Live = class PrismLive {
 		this.lang = (this.code.className.match(/lang(?:uage)?-(\w+)/i) || [,])[1];
 
 		this.observer = new MutationObserver(r => {
-			this.textarea.value = this.pre.textContent;
+			if (document.activeElement !== this.textarea) {
+				this.textarea.value = this.pre.textContent;
+			}
 		});
 
 		this.observe();
@@ -448,16 +450,19 @@ var _ = Prism.Live = class PrismLive {
 
 	// Replace currently selected text
 	replace(text) {
-		if (_.supportsExecCommand) {
+		if (_.supportsExecCommand !== false) {
 			var hadSelection = this.hasSelection;
-			document.execCommand("insertText", false, text);
+
+			this.insertText(text);
+
 			if (hadSelection) {
 				// By default inserText places the caret at the end, losing any selection
 				// What we want instead is the replaced text to be selected
 				this.selectionStart = this.selectionEnd - text.length;
 			}
 		}
-		else {
+
+		if (_.supportsExecCommand === false) {
 			this.textarea.setRangeText(text);
 			this.update();
 		}
@@ -465,22 +470,43 @@ var _ = Prism.Live = class PrismLive {
 
 	// Set text between indexes and restore caret position
 	set(text, {start, end} = {}) {
-		if (_.supportsExecCommand) {
+		if (_.supportsExecCommand !== false) {
 			var ss = this.selectionStart;
 			var se = this.selectionEnd;
 
 			this.selectionStart = start;
 			this.selectionEnd = end;
 
-			document.execCommand("insertText", false, text);
+			this.insertText(text);
 
 			this.selectionStart = ss;
 			this.selectionEnd = se;
 		}
-		else {
+
+		if (_.supportsExecCommand === false) {
 			this.textarea.setRangeText(text);
 			this.update();
 		}
+	}
+
+	insertText (text) {
+		if (!text) {
+			return;
+		}
+
+		if (_.supportsExecCommand === true) {
+			document.execCommand("insertText", false, text);
+		}
+		else if (_.supportsExecCommand === undefined) {
+			// We still don't know if document.execCommand("insertText") is supported
+			let value = this.value;
+
+			document.execCommand("insertText", false, text);
+
+			_.supportsExecCommand = value !== this.value;
+		}
+
+		return _.supportsExecCommand;
 	}
 
 	/**
@@ -762,14 +788,7 @@ Object.assign(_, {
 	})()
 });
 
-$.lazy(_, "supportsExecCommand", () => {
-	var t = $.create("textarea", {inside: document.body});
-	t.focus();
-	document.execCommand("insertText", false, "a");
-	var ret = !!t.value;
-	t.remove();
-	return ret;
-});
+_.supportsExecCommand = document.execCommand? undefined : false;
 
 $.ready().then(() => {
 	$$(":not(.prism-live) > textarea.prism-live, :not(.prism-live) > pre.prism-live").forEach(source => {
