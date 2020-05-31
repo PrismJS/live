@@ -1,6 +1,6 @@
 Prism.Live.registerLanguage("clike", {
 	comments: {
-		singleline: ["//"],
+		singleline: "//",
 		multiline: ["/*", "*/"]
 	},
 	snippets: {

@@ -366,15 +366,15 @@ var _ = Prism.Live = class PrismLive {
 		this.pre.scrollLeft = this.textarea.scrollLeft;
 	}
 
-	beforeCaretIndex(until = "") {
+	beforeCaretIndex (until = "") {
 		return this.value.lastIndexOf(until, this.selectionStart);
 	}
 
-	afterCaretIndex(until = "") {
+	afterCaretIndex (until = "") {
 		return this.value.indexOf(until, this.selectionEnd);
 	}
 
-	beforeCaret(until = "") {
+	beforeCaret (until = "") {
 		var index = this.beforeCaretIndex(until);
 
 		if (index === -1 || !until) {
@@ -449,44 +449,30 @@ var _ = Prism.Live = class PrismLive {
 	}
 
 	// Replace currently selected text
-	replace(text) {
-		if (_.supportsExecCommand !== false) {
-			var hadSelection = this.hasSelection;
+	replace (text) {
+		var hadSelection = this.hasSelection;
 
-			this.insertText(text);
+		this.insertText(text);
 
-			if (hadSelection) {
-				// By default inserText places the caret at the end, losing any selection
-				// What we want instead is the replaced text to be selected
-				this.selectionStart = this.selectionEnd - text.length;
-			}
-		}
-
-		if (_.supportsExecCommand === false) {
-			this.textarea.setRangeText(text);
-			this.update();
+		if (hadSelection) {
+			// By default inserText places the caret at the end, losing any selection
+			// What we want instead is the replaced text to be selected
+			this.selectionStart = this.selectionEnd - text.length;
 		}
 	}
 
 	// Set text between indexes and restore caret position
-	set(text, {start, end} = {}) {
-		if (_.supportsExecCommand !== false) {
-			var ss = this.selectionStart;
-			var se = this.selectionEnd;
+	set (text, {start, end} = {}) {
+		var ss = this.selectionStart;
+		var se = this.selectionEnd;
 
-			this.selectionStart = start;
-			this.selectionEnd = end;
+		this.selectionStart = start;
+		this.selectionEnd = end;
 
-			this.insertText(text);
+		this.insertText(text);
 
-			this.selectionStart = ss;
-			this.selectionEnd = se;
-		}
-
-		if (_.supportsExecCommand === false) {
-			this.textarea.setRangeText(text);
-			this.update();
-		}
+		this.selectionStart = ss;
+		this.selectionEnd = se;
 	}
 
 	insertText (text) {
@@ -506,6 +492,11 @@ var _ = Prism.Live = class PrismLive {
 			_.supportsExecCommand = value !== this.value;
 		}
 
+		if (_.supportsExecCommand === false) {
+			this.textarea.setRangeText(text, this.selectionStart, this.selectionEnd, "end");
+			requestAnimationFrame(() => this.update());
+		}
+
 		return _.supportsExecCommand;
 	}
 
@@ -516,7 +507,7 @@ var _ = Prism.Live = class PrismLive {
 	 * @param start {Number} Character offset
 	 * @param end {Number} Character offset
 	 */
-	wrap({before, after, start = this.selectionStart, end = this.selectionEnd} = {}) {
+	wrap ({before, after, start = this.selectionStart, end = this.selectionEnd} = {}) {
 		var ss = this.selectionStart;
 		var se = this.selectionEnd;
 		var between = this.value.slice(start, end);
@@ -543,7 +534,7 @@ var _ = Prism.Live = class PrismLive {
 		this.selectionEnd = se;
 	}
 
-	wrapSelection(o = {}) {
+	wrapSelection (o = {}) {
 		var hadSelection = this.hasSelection;
 
 		this.replace(o.before + this.selection + o.after);
@@ -572,8 +563,10 @@ var _ = Prism.Live = class PrismLive {
 			var start = this.getOffset(commentNode);
 			var commentText = commentNode.textContent;
 
-			if (comments.singleline && commentText.indexOf(comments.singleLine) === 0) {
-				// TODO
+			if (comments.singleline && commentText.indexOf(comments.singleline) === 0) {
+				var end = start + commentText.length;
+				this.set(this.value.slice(start + comments.singleline.length, end), {start, end});
+				this.moveCaret(-comments.singleline.length);
 			}
 			else {
 				comments = comments.multiline || comments;
@@ -594,7 +587,7 @@ var _ = Prism.Live = class PrismLive {
 			else {
 				// No selection, wrap line
 				// FIXME *inside indent*
-				comments = comments.singleline? [comments.singleline, "\n"] : comments.multiline || comments;
+				comments = comments.singleline? [comments.singleline, ""] : comments.multiline || comments;
 				end = this.afterCaretIndex("\n");
 				this.wrap({
 					before: comments[0],
