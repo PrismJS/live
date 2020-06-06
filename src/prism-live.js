@@ -599,7 +599,7 @@ var _ = Prism.Live = class PrismLive {
 		}
 	}
 
-	duplicateContent() {
+	duplicateContent () {
 		var before = this.beforeCaret("\n");
 		var after = this.afterCaret("\n");
 		var text = before + this.selection + after;
@@ -607,7 +607,7 @@ var _ = Prism.Live = class PrismLive {
 		this.insert(text, {index: this.selectionStart - before.length});
 	}
 
-	delete(characters, {forward, pos} = {}) {
+	delete (characters, {forward, pos} = {}) {
 		var i = characters = characters > 0? characters : (characters + "").length;
 
 		if (pos) {
