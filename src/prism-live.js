@@ -59,7 +59,11 @@ var _ = Prism.Live = class PrismLive {
 		}
 		else {
 			this.pre = this.source;
-			// this.pre.classList.add("no-whitespace-normalization");
+			// Normalize once, to fix indentation from markup and then remove normalization
+			// so we can enter blank lines etc
+
+			// Prism.plugins.NormalizeWhitespace.normalize($("code", this.pre), {});
+			this.pre.classList.add("no-whitespace-normalization");
 			this.code = $("code", this.pre);
 
 			this.textarea = $.create("textarea", {
@@ -220,7 +224,10 @@ var _ = Prism.Live = class PrismLive {
 	}
 
 	unobserve () {
-		this.observer && this.observer.disconnect();
+		if (this.observer) {
+			this.observer.takeRecords();
+			this.observer.disconnect();
+		}
 	}
 
 	expandSnippet(text) {
@@ -321,21 +328,27 @@ var _ = Prism.Live = class PrismLive {
 		return _.languages[lang] || _.languages.DEFAULT;
 	}
 
-	update () {
+	update (force) {
 		var code = this.value;
 
+		// If code ends in newline then browser "conveniently" trims it
+		// but we want to see the new line we just inserted!
+		// So we insert a zero-width space, which isn't trimmed
 		if (/\n$/.test(this.value)) {
 			code += "\u200b";
+		}
+
+		if (!force && this.code.textContent === code && $(".token", this.code)) {
+			// Already highlighted
+			return;
 		}
 
 		this.unobserve();
 		this.code.textContent = code;
 
-		requestAnimationFrame(() => {
-			this.observe();
-		});
-
 		Prism.highlightElement(this.code);
+
+		this.observe();
 	}
 
 	syncStyles() {
