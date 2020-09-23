@@ -365,6 +365,11 @@ var _ = Prism.Live = class PrismLive {
 				this.wrapper.style[prop] = cs[prop];
 				this.textarea.style[prop] = this.pre.style[prop] = "inherit";
 			}
+			console.log(prop)
+		}
+    
+		if (this.textarea.classList.contains('line-numbers')) {
+		    this.textarea.style['padding-left']=cs['padding-left'];
 		}
 
 		this.update();
