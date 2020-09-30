@@ -41,11 +41,14 @@ var _ = Prism.Live = class PrismLive {
 	constructor(source) {
 		this.source = source;
 		this.sourceType = source.nodeName.toLowerCase();
+		this.matchPairs = source.getAttribute("data-plMatchPairs") === 'true' || source.getAttribute("data-plMatchPairs") === null;
 
 		this.wrapper = $.create({
 			className: "prism-live",
 			around: this.source
 		});
+
+
 
 		if (this.sourceType === "textarea") {
 			this.textarea = this.source;
@@ -144,7 +147,7 @@ var _ = Prism.Live = class PrismLive {
 						}
 					}
 				}
-				else if (_.pairs[evt.key]) {
+				else if (_.pairs[evt.key] && this.matchPairs) {
 					var other = _.pairs[evt.key];
 					this.wrapSelection({
 						before: evt.key,

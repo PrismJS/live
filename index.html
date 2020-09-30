@@ -71,12 +71,15 @@
 		Just use a class of <code>prism-live</code> on it, and Prism Live will take care of the rest.</p>
 	</section>
 	<section>
-		<h2>Customization</h2>
+		<h2>Style Customization</h2>
 
 		<p>The editor consists of three elements, all with the class <code>prism-live</code>: A <code>&lt;textarea></code>, a <code>&lt;pre></code> after it, and a <code>&lt;div></code> that wraps both.</p>
 		<p>In many cases, just applying CSS to <code>pre.prism-live</code> or <code>div.prism-live</code> should work.</p>
 		<p>For setting a height or maximum height on the editor, either set them on the <code>&lt;pre></code> (if using that as a source), or set <code>--height</code> or <code>--max-height</code> respectively on the <code>&lt;textarea></code></p>
 		<p>There are also <code>--selection-background</code> and <code>--selection-color</code> properties available on the <code>&lt;textarea></code></p>
+
+		<h2>Functionality Customization</h2>
+		<p>The editor creates matching elements for certain pairs (such as parenthesis and quotes) automatically. To disable this, set <code>data-plMatchPairs="false"</code> on the <code>&lt;pre></code> (if using that as a source), or respectively on the <code>&lt;textarea></code>.</p>
 	</section>
 </main>
 
