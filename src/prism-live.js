@@ -368,7 +368,7 @@ var _ = Prism.Live = class PrismLive {
 		}
     
 		if (this.textarea.classList.contains('line-numbers')) {
-		    this.textarea.style['padding-left']=cs['padding-left'];
+			this.textarea.style['padding-left']=cs['padding-left'];
 		}
 
 		this.update();
