@@ -4,6 +4,7 @@
 	<meta charset="UTF-8">
 	<title>Prism Live: Lightweight, extensible, powerful web-based code editor</title>
 	<link rel="stylesheet" href="https://prismjs.com/themes/prism.css">
+	<link rel="stylesheet" href="https://prismjs.com/plugins/line-numbers/prism-line-numbers.css">
 	<link rel="stylesheet" href="prism-live.css">
 	<link rel="stylesheet" href="style.css">
 	<style>
@@ -11,6 +12,7 @@
 			background: black;
 		}
 	</style>
+	
 	<script>
 
 	</script>
@@ -32,6 +34,9 @@
 
 		<h3>Height grows with code / HTML editing</h3>
 		<textarea class="prism-live language-html fill"></textarea>
+		
+		<h3>Supports line-numbers</h3>
+		<textarea class="prism-live line-numbers language-html fill"></textarea>
 
 		<h3>Specific height / CSS editing</h3>
 		<textarea class="prism-live language-css fill" style="--height: 15em"></textarea>
@@ -89,10 +94,12 @@
 
 <script src="https://blissfuljs.com/bliss.shy.min.js"></script>
 <script src="https://prismjs.com/prism.js"></script>
+<script src="https://prismjs.com/plugins/line-numbers/prism-line-numbers.js"></script>
 <script src="src/prism-live.js"></script>
 <script src="src/prism-live-markup.js"></script>
 <script src="src/prism-live-css.js"></script>
 <script src="src/prism-live-javascript.js"></script>
 <script src="index.js"></script>
+
 </body>
 </html>
