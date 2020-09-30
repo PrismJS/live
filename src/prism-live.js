@@ -366,10 +366,9 @@ var _ = Prism.Live = class PrismLive {
 				this.textarea.style[prop] = this.pre.style[prop] = "inherit";
 			}
 		}
-    
-		if (this.textarea.classList.contains('line-numbers')) {
-			this.textarea.style['padding-left']=cs['padding-left'];
-		}
+	
+		// This is primarily for supporting the line-numbers plugin.
+		this.textarea.style['padding-left'] = cs['padding-left'];
 
 		this.update();
 	}
