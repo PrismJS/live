@@ -46,6 +46,9 @@
 
 		<h3>Initialization with <code>&lt;pre></code></h3>
 		<pre class="prism-live language-js"><code>let foo = bar();</code></pre>
+		
+		<h3>Custom pair matching</h3>
+		<pre class="prism-live language-html" data-pl-pairs="&lt;&gt;"><code>&lt;p data-pl-pairs="&amp;lt;&amp;gt;"&gt;This editor closes angle brackets &lt;/p&gt;</code></pre>
 	</section>
 	<section>
 		<h2>Including the library</h2>
@@ -84,7 +87,7 @@
 		<p>There are also <code>--selection-background</code> and <code>--selection-color</code> properties available on the <code>&lt;textarea></code></p>
 
 		<h2>Functionality Customization</h2>
-		<p>The editor creates matching elements for certain pairs (such as parenthesis and quotes) automatically. To disable this, set <code>data-plMatchPairs="false"</code> on the <code>&lt;pre></code> (if using that as a source), or respectively on the <code>&lt;textarea></code>.</p>
+		<p>The editor creates matching elements for certain pairs (such as parenthesis and quotes) automatically. To customize this, specify pairs using <code>data-pl-pairs="..."</code> on the <code>&lt;pre></code> (if using that as a source), or respectively on the <code>&lt;textarea></code>. This can be set to a comma separated list of pairs such as <code>data-pl-pairs="(),'',&amp;quot;&amp;quot;,&amp;lt;&amp;gt;"</code></code></p>
 	</section>
 </main>
 
