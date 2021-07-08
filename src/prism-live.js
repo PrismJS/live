@@ -47,6 +47,23 @@ var _ = Prism.Live = class PrismLive {
 			around: this.source
 		});
 
+		const pairString = source.getAttribute("data-pl-pairs");
+		if (pairString !== null) {
+			if (pairString === 'none' || pairString === '') { 
+				//user was trying to kill pairs.
+				this.localPairs = {};
+			} else if (/^(?:(?:[^,][^,])(?:,(?:[^,][^,]))*|none)?$/.test(pairString)) { 
+				// data-pairs is formatted correctly
+				this.localPairs = {};
+				pairString.split(',').forEach(pair => {
+					const [left, right] = pair;
+					this.localPairs[left] = right;
+				});
+			} else {
+				// should this throw?
+			}
+		}
+
 		if (this.sourceType === "textarea") {
 			this.textarea = this.source;
 			this.code = $.create("code");
@@ -144,7 +161,16 @@ var _ = Prism.Live = class PrismLive {
 						}
 					}
 				}
-				else if (_.pairs[evt.key]) {
+				else if (this.localPairs && this.localPairs[evt.key]) {
+					var other = this.localPairs[evt.key];
+					this.wrapSelection({
+						before: evt.key,
+						after: other,
+						outside: true
+					});
+					evt.preventDefault();
+				}
+				else if (_.pairs[evt.key] && !this.localPairs) {
 					var other = _.pairs[evt.key];
 					this.wrapSelection({
 						before: evt.key,
