@@ -5,6 +5,8 @@
 */
 (async function() {
 
+const CURRENT_URL = document.currentScript? new URL(document.currentScript.src) : null;
+
 if (!window.Bliss) {
 	// Load Bliss if not loaded
 	console.log("Bliss not loaded. Loading remotely from blissfuljs.com");
@@ -19,10 +21,9 @@ if (!window.Bliss) {
 var $ = Bliss, $$ = Bliss.$;
 var ready = Promise.resolve();
 
-if (document.currentScript) {
+if (CURRENT_URL) {
 	// Tiny dynamic loader. Use e.g. ?load=css,markup,javascript to load components
-	var base = document.currentScript.src;
-	var load = new URL(base).searchParams.get("load");
+	var load = CURRENT_URL.searchParams.get("load");
 
 	if (load !== null) {
 		var files = ["../prism-live.css"];
@@ -31,7 +32,7 @@ if (document.currentScript) {
 			files.push(...load.split(/,/).map(c => /\./.test(c)? c : `prism-live-${c}.js`));
 		}
 
-		ready = Promise.all(files.map(url => $.load(url, base)));
+		ready = Promise.all(files.map(url => $.load(url, CURRENT_URL)));
 	}
 }
 
