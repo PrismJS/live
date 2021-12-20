@@ -329,6 +329,29 @@ var _ = Prism.Live = class PrismLive {
 		return _.languages[lang] || _.languages.DEFAULT;
 	}
 
+	setSelection(start, end) {
+		if (start && typeof start === "object" && (start.start || start.end)) {
+			end = start.end;
+			start = start.start;
+		}
+
+		let prevStart = this.selectionStart;
+		let prevEnd = this.selectionEnd;
+
+		if (start !== undefined) {
+			this.selectionStart = start;
+		}
+
+		if (end !== undefined) {
+			this.selectionEnd = end;
+		}
+
+		// If there is a selection, and it's not the same as the previous selection, fire appropriate select event
+		if (this.selectionStart !== this.selectionEnd && (prevStart !== this.selectionStart || prevEnd !== this.selectionEnd)) {
+			this.textarea.dispatchEvent(new Event("select", {bubbles: true}));
+		}
+	}
+
 	update (force) {
 		var code = this.value;
 
@@ -367,7 +390,7 @@ var _ = Prism.Live = class PrismLive {
 				this.textarea.style[prop] = this.pre.style[prop] = "inherit";
 			}
 		}
-	
+
 		// This is primarily for supporting the line-numbers plugin.
 		this.textarea.style['padding-left'] = cs['padding-left'];
 
@@ -460,8 +483,10 @@ var _ = Prism.Live = class PrismLive {
 			this.selectionStart = this.selectionEnd = index;
 			this.replace(text);
 
-			this.selectionStart = start + (index < start? text.length : 0);
-			this.selectionEnd = end + (index <= end? text.length : 0);
+			this.setSelection(
+				start + (index < start? text.length : 0),
+				end + (index <= end? text.length : 0)
+			);
 		}
 	}
 
@@ -474,7 +499,7 @@ var _ = Prism.Live = class PrismLive {
 		if (hadSelection) {
 			// By default inserText places the caret at the end, losing any selection
 			// What we want instead is the replaced text to be selected
-			this.selectionStart = this.selectionEnd - text.length;
+			this.setSelection({start: this.selectionEnd - text.length});
 		}
 	}
 
@@ -483,13 +508,11 @@ var _ = Prism.Live = class PrismLive {
 		var ss = this.selectionStart;
 		var se = this.selectionEnd;
 
-		this.selectionStart = start;
-		this.selectionEnd = end;
+		this.setSelection(start, end);
 
 		this.insertText(text);
 
-		this.selectionStart = ss;
-		this.selectionEnd = se;
+		this.setSelection(ss, se);
 	}
 
 	insertText (text) {
@@ -547,8 +570,7 @@ var _ = Prism.Live = class PrismLive {
 			se += after.length;
 		}
 
-		this.selectionStart = ss;
-		this.selectionEnd = se;
+		this.setSelection(ss, se);
 	}
 
 	wrapSelection (o = {}) {
