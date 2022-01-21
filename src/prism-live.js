@@ -752,6 +752,14 @@ var _ = Prism.Live = class PrismLive {
 			return text.replace(/^/gm, indent);
 		}
 	}
+
+	static create (source, ...args) {
+		let ret = _.all.get(source);
+		if (!ret) {
+			ret = new _(source);
+		}
+		return ret;
+	}
 };
 
 // Static properties
@@ -823,11 +831,7 @@ Object.assign(_, {
 _.supportsExecCommand = document.execCommand? undefined : false;
 
 $.ready().then(() => {
-	$$(":not(.prism-live) > textarea.prism-live, :not(.prism-live) > pre.prism-live").forEach(source => {
-		if (!_.all.get(source)) {
-			new _(source);
-		}
-	});
+	$$(":not(.prism-live) > textarea.prism-live, :not(.prism-live) > pre.prism-live").forEach(source => _.create(source));
 });
 
 })();
