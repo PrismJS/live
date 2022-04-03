@@ -1,8 +1,6 @@
 div.prism-live {
 	position: relative;
 	box-sizing: border-box;
-	display: flex;
-	flex-flow: column;
 }
 
 textarea.prism-live,
@@ -51,7 +49,6 @@ textarea.prism-live {
 	}
 
 pre.prism-live {
-	flex: 1;
 	position: relative;
 	pointer-events: none;
 	overflow: hidden;
