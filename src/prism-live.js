@@ -154,6 +154,13 @@ var _ = Prism.Live = class PrismLive {
 					});
 					evt.preventDefault();
 				}
+				else if (Object.values(_.pairs).includes(evt.key)) {
+					if (this.selectionStart == this.selectionEnd && this.textarea.value[this.selectionEnd] == evt.key) {
+						this.selectionStart += 1;
+						this.selectionEnd += 1;
+						evt.preventDefault();
+					}
+				}
 				else {
 					for (let shortcut in _.shortcuts) {
 						if (_.checkShortcut(shortcut, evt)) {
