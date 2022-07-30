@@ -154,7 +154,7 @@ var _ = Prism.Live = class PrismLive {
 					});
 					evt.preventDefault();
 				}
-				else if (_.pairsright.includes(evt.key)) {
+				else if (Object.values(_.pairs).includes(evt.key)) {
 					if (this.selectionStart == this.selectionEnd && this.textarea.value[this.selectionEnd] == evt.key) {
 						this.selectionStart += 1;
 						this.selectionEnd += 1;
@@ -787,14 +787,6 @@ Object.assign(_, {
 		"'": "'",
 		"`": "`"
 	},
-	pairsright: [
-		")",
-		"]",
-		"}",
-		'"',
-		"'",
-		"`"
-	],
 	shortcuts: {
 		"Cmd + /": function() {
 			this.toggleComment();
