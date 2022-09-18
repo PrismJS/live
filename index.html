@@ -3,16 +3,17 @@
 <head>
 	<meta charset="UTF-8">
 	<title>Prism Live: Lightweight, extensible, powerful web-based code editor</title>
-	<link rel="stylesheet" href="https://prismjs.com/themes/prism.css">
-	<link rel="stylesheet" href="https://prismjs.com/plugins/line-numbers/prism-line-numbers.css">
-	<link rel="stylesheet" href="prism-live.css">
+	<!-- <link rel="stylesheet" href="https://prismjs.com/themes/prism.css">
+	<link rel="stylesheet" href="https://prismjs.com/plugins/line-numbers/prism-line-numbers.css"> -->
+	<link rel="stylesheet" href="../prism/themes/prism.css">
+	<link rel="stylesheet" href="../prism/plugins/line-numbers/prism-line-numbers.css">
 	<link rel="stylesheet" href="style.css">
 	<style>
 		foo {
 			background: black;
 		}
 	</style>
-	
+
 	<script>
 
 	</script>
@@ -33,19 +34,22 @@
 		<h2>Demos</h2>
 
 		<h3>Height grows with code / HTML editing</h3>
-		<textarea class="prism-live language-html fill"></textarea>
-		
+		<prism-live class="language-html fill"></prism-live>
+
 		<h3>Supports line-numbers</h3>
-		<textarea class="prism-live line-numbers language-html fill"></textarea>
+		<!-- <prism-live class="line-numbers language-html fill"></prism-live> -->
 
 		<h3>Specific height / CSS editing</h3>
-		<textarea class="prism-live language-css fill" style="--height: 15em"></textarea>
+		<!-- <prism-live class="language-css fill" style="--height: 15em"></prism-live> -->
 
 		<h3>Height grows up to specific max height / JS editing</h3>
-		<textarea class="prism-live language-js fill" style="--max-height: 30em"></textarea>
+		<!-- <prism-live class="language-js fill" style="--max-height: 30em"></prism-live> -->
+
+		<!-- <h3>Initialization with <code>&lt;textarea></code></h3>
+		<prism-live><textarea class="language-js">let foo = bar();</textarea></prism-live>
 
 		<h3>Initialization with <code>&lt;pre></code></h3>
-		<pre class="prism-live language-js"><code>let foo = bar();</code></pre>
+		<prism-live><pre class="language-js"><code>let foo = bar();</code></pre></prism-live> -->
 	</section>
 	<section>
 		<h2>Including the library</h2>
@@ -62,6 +66,8 @@
 	</section>
 	<section>
 		<h2>Initialization</h2>
+
+		<prism-live class="language-javascript">let foo = bar();</prism-live>
 
 		<h3>Via a <code>&lt;textarea></code></h3>
 
@@ -89,14 +95,14 @@
 	Made by <a href="http://lea.verou.me">Lea Verou</a>, currently a work in progress.
 </footer>
 
-<script src="https://blissfuljs.com/bliss.shy.min.js"></script>
-<script src="https://prismjs.com/prism.js"></script>
-<script src="https://prismjs.com/plugins/line-numbers/prism-line-numbers.js"></script>
-<script src="src/prism-live.js"></script>
-<script src="src/prism-live-markup.js"></script>
+<!-- <script src="https://blissfuljs.com/bliss.shy.min.js"></script> -->
+<script src="../prism/prism.js"></script>
+<script src="../prism/plugins/line-numbers/prism-line-numbers.js"></script>
+<script src="src/index.js" type="module"></script>
+<!-- <script src="src/prism-live-markup.js"></script>
 <script src="src/prism-live-css.js"></script>
-<script src="src/prism-live-javascript.js"></script>
-<script src="index.js"></script>
+<script src="src/prism-live-javascript.js"></script> -->
+<script src="index.js" type="module"></script>
 
 </body>
 </html>

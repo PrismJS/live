@@ -3,185 +3,222 @@
 	Works best in Chrome. Currently only very basic support in other browsers (no snippets, no shortcuts)
 	@author Lea Verou
 */
-import * as util from "./util.js";
+(async function() {
 
-if (!self.Prism) {
-	// Import Prism
-	// await import("https://prismjs.com/prism.js");
-	await import("../../prism/prism.js");
+const CURRENT_URL = document.currentScript? new URL(document.currentScript.src) : null;
+
+if (!window.Bliss) {
+	// Load Bliss if not loaded
+	console.log("Bliss not loaded. Loading remotely from blissfuljs.com");
+
+	let bliss = document.createElement("script");
+	bliss.src = "https://blissfuljs.com/bliss.shy.min.js";
+	document.head.appendChild(bliss);
+
+	await new Promise(resolve => bliss.onload = resolve);
 }
 
-const baseURL = import.meta.url;
-const superKey = navigator.platform.indexOf("Mac") === 0? "metaKey" : "ctrlKey";
-let supportsExecCommand = document.execCommand? undefined : false;
+var $ = Bliss, $$ = Bliss.$;
+var ready = Promise.resolve();
 
-// Load light DOM CSS
-document.head.insertAdjacentHTML("beforeend", `<link rel="stylesheet" href="${ new URL("./prism-live.css", baseURL) }" />`);
+if (CURRENT_URL) {
+	// Tiny dynamic loader. Use e.g. ?load=css,markup,javascript to load components
+	var load = CURRENT_URL.searchParams.get("load");
 
-export default class PrismLive extends HTMLElement {
-	#pre
-	#editor
-	#slot
-	#code
+	if (load !== null) {
+		var files = ["./prism-live.css"];
 
-	constructor () {
-		super();
-
-		this.attachShadow({mode: "open"});
-		this.shadowRoot.innerHTML = `
-		<style>
-		@import url("${ new URL("./prism-live-shadow.css", baseURL) }")
-		</style>
-		<slot></slot>
-		<textarea part=editor></textarea>`;
-
-		this.#editor = this.shadowRoot.querySelector("textarea");
-		this.#slot =  this.shadowRoot.querySelector("slot");
-		this.#pre = this.ownerDocument.createElement("pre");
-		this.#code = this.ownerDocument.createElement("code");
-		this.#pre.append(this.#code);
-		this.#code.append(...this.childNodes);
-		this.append(this.#pre);
-
-		Object.assign(this.#pre, {
-			className: this.#editor.className + "prism-live no-whitespace-normalization",
-		})
-
-		// Normalize once, to fix indentation from markup and then remove normalization
-		// so we can enter blank lines etc
-
-		// Prism.plugins.NormalizeWhitespace.normalize(this.#code, {});
-		this.#editor.value = this.textContent;
-
-		if (self.Incrementable) {
-			// TODO attribute for modifiers
-			// TODO load dynamically if not present
-			new Incrementable(this.#editor);
+		if (load) {
+			files.push(...load.split(/,/).map(c => /\./.test(c)? c : `prism-live-${c}.js`));
 		}
 
-		util.bind(this.#editor, "input keydown keyup click", this.#handleEditorEvent.bind(this));
+		ready = Promise.all(files.map(url => $.load(url, CURRENT_URL)));
+	}
+}
+
+var superKey = navigator.platform.indexOf("Mac") === 0? "metaKey" : "ctrlKey";
+
+var _ = Prism.Live = class PrismLive {
+	constructor(source) {
+		this.source = source;
+		this.sourceType = source.nodeName.toLowerCase();
+
+		this.wrapper = $.create({
+			className: "prism-live",
+			around: this.source
+		});
+
+		if (this.sourceType === "textarea") {
+			this.textarea = this.source;
+			this.code = $.create("code");
+
+			this.pre = $.create("pre", {
+				className: this.textarea.className + " no-whitespace-normalization",
+				contents: this.code,
+				before: this.textarea
+			});
+		}
+		else {
+			this.pre = this.source;
+			// Normalize once, to fix indentation from markup and then remove normalization
+			// so we can enter blank lines etc
+
+			// Prism.plugins.NormalizeWhitespace.normalize($("code", this.pre), {});
+			this.pre.classList.add("no-whitespace-normalization");
+			this.code = $("code", this.pre);
+
+			this.textarea = $.create("textarea", {
+				className: this.pre.className,
+				value: this.pre.textContent,
+				after: this.pre
+			});
+		}
+
+		_.all.set(this.textarea, this);
+		_.all.set(this.pre, this);
+		_.all.set(this.code, this);
+
+		this.pre.classList.add("prism-live");
+		this.textarea.classList.add("prism-live");
+		this.source.classList.add("prism-live-source");
+
+		if (self.Incrementable) {
+			// TODO data-* attribute for modifier
+			// TODO load dynamically if not present
+			new Incrementable(this.textarea);
+		}
+
+		$.bind(this.textarea, {
+			input: evt => this.update(),
+
+			keyup: evt => {
+				if (evt.key == "Enter") { // Enter
+					// Maintain indent on line breaks
+					this.insert(this.currentIndent);
+					this.syncScroll();
+				}
+			},
+
+			keydown: evt => {
+				if (evt.key == "Tab" && !evt.altKey) {
+					// Default is to move focus off the textarea
+					// this is never desirable in an editor
+					evt.preventDefault();
+
+					if (this.tabstops && this.tabstops.length > 0) {
+						// We have tabstops to go
+						this.moveCaret(this.tabstops.shift());
+					}
+					else if (this.hasSelection) {
+						var before = this.beforeCaret("\n");
+						var outdent = evt.shiftKey;
+
+						this.selectionStart -= before.length;
+
+						var selection = _.adjustIndentation(this.selection, {
+							relative: true,
+							indentation: outdent? -1 : 1
+						});
+
+						this.replace(selection);
+
+						if (outdent) {
+							var indentStart = _.regexp.gm`^${this.indent}`;
+							var isBeforeIndented = indentStart.test(before);
+							this.selectionStart += before.length + 1 - (outdent + isBeforeIndented);
+						}
+						else { // Indent
+							var hasLineAbove = before.length == this.selectionStart;
+							this.selectionStart += before.length + 1 + !hasLineAbove;
+						}
+					}
+					else {
+						// Nothing selected, expand snippet
+						var selector = _.match(this.beforeCaret(), /\S*$/);
+						var snippetExpanded = this.expandSnippet(selector);
+
+						if (snippetExpanded) {
+							requestAnimationFrame(() => $.fire(this.textarea, "input"));
+						}
+						else {
+							this.insert(this.indent);
+						}
+					}
+				}
+				else if (_.pairs[evt.key]) {
+					var other = _.pairs[evt.key];
+					this.wrapSelection({
+						before: evt.key,
+						after: other,
+						outside: true
+					});
+					evt.preventDefault();
+				}
+				else {
+					for (let shortcut in _.shortcuts) {
+						if (_.checkShortcut(shortcut, evt)) {
+							_.shortcuts[shortcut].call(this, evt);
+							evt.preventDefault();
+						}
+					}
+				}
+			},
+
+			click: evt => {
+				var l = this.getLine();
+				var v = this.value;
+				var ss = this.selectionStart;
+				//console.log(ss, v[ss], l, v.slice(l.start, l.end));
+			},
+
+			"click keyup": evt => {
+				if (!evt.key || evt.key.lastIndexOf("Arrow") > -1) {
+					// Caret moved
+					this.tabstops = null;
+				}
+			}
+		});
 
 		// this.syncScroll();
-		this.#editor.addEventListener("scroll", evt => this.syncScroll(), {passive: true});
+		this.textarea.addEventListener("scroll", this, {passive: true});
 
-		window.addEventListener("resize", evt => this.syncStyles(), {passive: true});
+		$.bind(window, {
+			"resize": evt => this.syncStyles()
+		});
 
 		// Copy styles with a delay
 		requestAnimationFrame(() => {
 			this.syncStyles();
 
-			var sourceCS = getComputedStyle(this);
+			var sourceCS = getComputedStyle(this.source);
 
-			this.#pre.style.height = sourceCS.getPropertyValue("--height");
-			this.#pre.style.maxHeight = sourceCS.getPropertyValue("--max-height");
-			this.#editor.spellcheck = this.spellcheck || sourceCS.getPropertyValue("--spellcheck");
+			this.pre.style.height = this.source.style.height || sourceCS.getPropertyValue("--height");
+			this.pre.style.maxHeight = this.source.style.maxHeight || sourceCS.getPropertyValue("--max-height");
+			this.textarea.spellcheck = this.source.spellcheck || sourceCS.getPropertyValue("--spellcheck");
 		});
 
 		this.update();
-		this.lang = (this.#code.className.match(/lang(?:uage)?-(\w+)/i) || [,])[1];
+		this.lang = (this.code.className.match(/lang(?:uage)?-(\w+)/i) || [,])[1];
 
 		this.observer = new MutationObserver(r => {
-			if (document.activeElement !== this.#editor) {
-				this.#editor.value = this.#pre.textContent;
+			if (document.activeElement !== this.textarea) {
+				this.textarea.value = this.pre.textContent;
 			}
 		});
 
 		this.observe();
 
-		this.dispatchEvent(new CustomEvent("prism-live-init", {bubbles: true, detail: this}));
+		this.source.dispatchEvent(new CustomEvent("prism-live-init", {bubbles: true, detail: this}));
 	}
 
-	connectedCallback () {
-
-	}
-
-	// Handles events on this.#editor
-	#handleEditorEvent (evt) {
-		if (evt.type === "input") {
-			this.update();
-		}
-		else if (evt.type === "keyup") {
-			if (evt.key == "Enter") { // Enter
-				// Maintain indent on line breaks
-				this.insert(this.currentIndent);
-				this.syncScroll();
-			}
-		}
-		else if (evt.type === "keydown") {
-			if (evt.key == "Tab" && !evt.altKey) {
-				// Default is to move focus off the textarea
-				// this is never desirable in an editor
-				evt.preventDefault();
-
-				if (this.tabstops && this.tabstops.length > 0) {
-					// We have tabstops to go
-					this.moveCaret(this.tabstops.shift());
-				}
-				else if (this.hasSelection) {
-					var before = this.beforeCaret("\n");
-					var outdent = evt.shiftKey;
-
-					this.selectionStart -= before.length;
-
-					var selection = PrismLive.adjustIndentation(this.selection, {
-						relative: true,
-						indentation: outdent? -1 : 1
-					});
-
-					this.replace(selection);
-
-					if (outdent) {
-						var indentStart = PrismLive.regexp.gm`^${this.indent}`;
-						var isBeforeIndented = indentStart.test(before);
-						this.selectionStart += before.length + 1 - (outdent + isBeforeIndented);
-					}
-					else { // Indent
-						var hasLineAbove = before.length == this.selectionStart;
-						this.selectionStart += before.length + 1 + !hasLineAbove;
-					}
-				}
-				else {
-					// Nothing selected, expand snippet
-					var selector = PrismLive.match(this.beforeCaret(), /\S*$/);
-					var snippetExpanded = this.expandSnippet(selector);
-
-					if (snippetExpanded) {
-						requestAnimationFrame(() => this.#editor.dispatchEvent(new InputEvent("input", {inputType: "insertText"})));
-					}
-					else {
-						this.insert(this.indent);
-					}
-				}
-			}
-			else if (PrismLive.pairs[evt.key]) {
-				var other = PrismLive.pairs[evt.key];
-				this.wrapSelection({
-					before: evt.key,
-					after: other,
-					outside: true
-				});
-				evt.preventDefault();
-			}
-			else {
-				for (let shortcut in PrismLive.shortcuts) {
-					if (PrismLive.checkShortcut(shortcut, evt)) {
-						PrismLive.shortcuts[shortcut].call(this, evt);
-						evt.preventDefault();
-					}
-				}
-			}
-		}
-
-		if (evt.type === "click" || evt.type === "keyup") {
-			if (!evt.key || evt.key.lastIndexOf("Arrow") > -1) {
-				// Caret moved
-				this.tabstops = null;
-			}
+	handleEvent(evt) {
+		if (evt.type === "scroll") {
+			this.syncScroll();
 		}
 	}
 
 	observe () {
-		return this.observer && this.observer.observe(this.#pre, {
+		return this.observer && this.observer.observe(this.pre, {
 			childList: true,
 			subtree: true,
 			characterData: true
@@ -202,9 +239,9 @@ export default class PrismLive extends HTMLElement {
 
 		var context = this.context;
 
-		if (text in context.snippets || text in PrismLive.snippets) {
+		if (text in context.snippets || text in _.snippets) {
 			// Static Snippets
-			var expansion = context.snippets[text] || PrismLive.snippets[text];
+			var expansion = context.snippets[text] || _.snippets[text];
 		}
 		else if (context.snippets.custom) {
 			var expansion = context.snippets.custom.call(this, text);
@@ -217,11 +254,11 @@ export default class PrismLive extends HTMLElement {
 			var str = expansion;
 			var match;
 
-			while (match = PrismLive.CARET_INDICATOR.exec(str)) {
+			while (match = _.CARET_INDICATOR.exec(str)) {
 				stops.push(match.index + 1);
 				replacement.push(str.slice(0, match.index + match[1].length));
 				str = str.slice(match.index + match[0].length);
-				PrismLive.CARET_INDICATOR.lastIndex = 0;
+				_.CARET_INDICATOR.lastIndex = 0;
 			}
 
 			replacement.push(str);
@@ -242,17 +279,17 @@ export default class PrismLive extends HTMLElement {
 	}
 
 	get selectionStart() {
-		return this.#editor.selectionStart;
+		return this.textarea.selectionStart;
 	}
 	set selectionStart(v) {
-		this.#editor.selectionStart = v;
+		this.textarea.selectionStart = v;
 	}
 
 	get selectionEnd() {
-		return this.#editor.selectionEnd;
+		return this.textarea.selectionEnd;
 	}
 	set selectionEnd(v) {
-		this.#editor.selectionEnd = v;
+		this.textarea.selectionEnd = v;
 	}
 
 	get hasSelection() {
@@ -264,33 +301,33 @@ export default class PrismLive extends HTMLElement {
 	}
 
 	get value() {
-		return this.#editor.value;
+		return this.textarea.value;
 	}
 	set value(v) {
-		this.#editor.value = v;
+		this.textarea.value = v;
 	}
 
 	get indent() {
-		return PrismLive.match(this.value, /^[\t ]+/m, PrismLive.DEFAULT_INDENT);
+		return _.match(this.value, /^[\t ]+/m, _.DEFAULT_INDENT);
 	}
 
 	get currentIndent() {
 		var before = this.value.slice(0, this.selectionStart-1);
-		return PrismLive.match(before, /^[\t ]*/mg, "", -1);
+		return _.match(before, /^[\t ]*/mg, "", -1);
 	}
 
 	// Current language at caret position
 	get currentLanguage() {
 		var node = this.getNode();
-		node = node? node.parentNode : this.#code;
-		var lang = PrismLive.match(node.closest('[class*="language-"]').className, /language-(\w+)/, 1);
-		return PrismLive.aliases[lang] || lang;
+		node = node? node.parentNode : this.code;
+		var lang = _.match(node.closest('[class*="language-"]').className, /language-(\w+)/, 1);
+		return _.aliases[lang] || lang;
 	}
 
 	// Get settings based on current language
 	get context() {
 		var lang = this.currentLanguage;
-		return PrismLive.languages[lang] || PrismLive.languages.DEFAULT;
+		return _.languages[lang] || _.languages.DEFAULT;
 	}
 
 	setSelection(start, end) {
@@ -312,7 +349,7 @@ export default class PrismLive extends HTMLElement {
 
 		// If there is a selection, and it's not the same as the previous selection, fire appropriate select event
 		if (this.selectionStart !== this.selectionEnd && (prevStart !== this.selectionStart || prevEnd !== this.selectionEnd)) {
-			this.#editor.dispatchEvent(new Event("select", {bubbles: true}));
+			this.textarea.dispatchEvent(new Event("select", {bubbles: true}));
 		}
 	}
 
@@ -326,48 +363,48 @@ export default class PrismLive extends HTMLElement {
 			code += "\u200b";
 		}
 
-		if (!force && this.#code.textContent === code && this.#code.querySelector(".token")) {
+		if (!force && this.code.textContent === code && $(".token", this.code)) {
 			// Already highlighted
 			return;
 		}
 
 		this.unobserve();
-		this.#code.textContent = code;
+		this.code.textContent = code;
 
-		Prism.highlightElement(this.#code);
+		Prism.highlightElement(this.code);
 
 		this.observe();
 	}
 
 	syncStyles() {
 		// Copy pre metrics over to textarea
-		var cs = getComputedStyle(this.#pre);
+		var cs = getComputedStyle(this.pre);
 
 		// Copy styles from <pre> to textarea
-		this.#editor.style.caretColor = cs.color;
+		this.textarea.style.caretColor = cs.color;
 
 		var properties = /^(font|lineHeight)|[tT]abSize/gi;
 
 		for (var prop in cs) {
-			if (cs[prop] && prop in this.#editor.style && properties.test(prop)) {
-				this.style[prop] = cs[prop];
-				this.#editor.style[prop] = this.#pre.style[prop] = "inherit";
+			if (cs[prop] && prop in this.textarea.style && properties.test(prop)) {
+				this.wrapper.style[prop] = cs[prop];
+				this.textarea.style[prop] = this.pre.style[prop] = "inherit";
 			}
 		}
 
 		// This is primarily for supporting the line-numbers plugin.
-		this.#editor.style['padding-left'] = cs['padding-left'];
+		this.textarea.style['padding-left'] = cs['padding-left'];
 
 		this.update();
 	}
 
 	syncScroll() {
-		if (this.#pre.clientWidth === 0 && this.#pre.clientHeight === 0) {
+		if (this.pre.clientWidth === 0 && this.pre.clientHeight === 0) {
 			return;
 		}
 
-		this.#pre.scrollTop = this.#editor.scrollTop;
-		this.#pre.scrollLeft = this.#editor.scrollLeft;
+		this.pre.scrollTop = this.textarea.scrollTop;
+		this.pre.scrollLeft = this.textarea.scrollLeft;
 	}
 
 	beforeCaretIndex (until = "") {
@@ -433,7 +470,7 @@ export default class PrismLive extends HTMLElement {
 			return;
 		}
 
-		this.#editor.focus();
+		this.textarea.focus();
 
 		if (index === undefined) {
 			// No specified index, insert in current caret position
@@ -484,24 +521,24 @@ export default class PrismLive extends HTMLElement {
 			return;
 		}
 
-		if (supportsExecCommand === true) {
+		if (_.supportsExecCommand === true) {
 			document.execCommand("insertText", false, text);
 		}
-		else if (supportsExecCommand === undefined) {
+		else if (_.supportsExecCommand === undefined) {
 			// We still don't know if document.execCommand("insertText") is supported
 			let value = this.value;
 
 			document.execCommand("insertText", false, text);
 
-			supportsExecCommand = value !== this.value;
+			_.supportsExecCommand = value !== this.value;
 		}
 
-		if (supportsExecCommand === false) {
-			this.#editor.setRangeText(text, this.selectionStart, this.selectionEnd, "end");
+		if (_.supportsExecCommand === false) {
+			this.textarea.setRangeText(text, this.selectionStart, this.selectionEnd, "end");
 			requestAnimationFrame(() => this.update());
 		}
 
-		return supportsExecCommand;
+		return _.supportsExecCommand;
 	}
 
 	/**
@@ -633,7 +670,7 @@ export default class PrismLive extends HTMLElement {
 	/**
 	 * Get the text node at a given chracter offset
 	 */
-	getNode (offset = this.selectionStart, container = this.#code) {
+	getNode(offset = this.selectionStart, container = this.code) {
 		var node, sum = 0;
 		var walk = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
 
@@ -652,9 +689,9 @@ export default class PrismLive extends HTMLElement {
 	/**
 	 * Get the character offset of a given node in the highlighted source
 	 */
-	getOffset (node) {
+	getOffset(node) {
 		var range = document.createRange();
-		range.selectNodeContents(this.#code);
+		range.selectNodeContents(this.code);
 		range.setEnd(node, 0);
 		return range.toString().length;
 	}
@@ -675,7 +712,7 @@ export default class PrismLive extends HTMLElement {
 		return match? match[index] : def;
 	}
 
-	static checkShortcut (shortcut, evt) {
+	static checkShortcut(shortcut, evt) {
 		return shortcut.trim().split(/\s*\+\s*/).every(key => {
 			switch (key) {
 				case "Cmd":   return evt[superKey];
@@ -687,40 +724,49 @@ export default class PrismLive extends HTMLElement {
 		});
 	}
 
-	static registerLanguage (name, context, parent = PrismLive.languages.DEFAULT) {
+	static registerLanguage(name, context, parent = _.languages.DEFAULT) {
 		Object.setPrototypeOf(context, parent);
-		return PrismLive.languages[name] = context;
+		return _.languages[name] = context;
 	}
 
-	static matchIndentation (text, currentIndent) {
+	static matchIndentation(text, currentIndent) {
 		// FIXME this assumes that text has no indentation of its own
 		// to make this more generally useful beyond snippets, we should first
 		// strip text's own indentation.
 		text = text.replace(/\r?\n/g, "$&" + currentIndent);
 	}
 
-	static adjustIndentation (text, {indentation, relative = true, indent = PrismLive.DEFAULT_INDENT}) {
+	static adjustIndentation(text, {indentation, relative = true, indent = _.DEFAULT_INDENT}) {
 		if (!relative) {
 			// First strip min indentation
-			var minIndent = text.match(PrismLive.regexp.gm`^(${indent})+`).sort()[0];
+			var minIndent = text.match(_.regexp.gm`^(${indent})+`).sort()[0];
 
 			if (minIndent) {
-				text.replace(PrismLive.regexp.gm`^${minIndent}`, "");
+				text.replace(_.regexp.gm`^${minIndent}`, "");
 			}
 		}
 
 		if (indentation < 0) {
-			return text.replace(PrismLive.regexp.gm`^${indent}`, "");
+			return text.replace(_.regexp.gm`^${indent}`, "");
 		}
 		else if (indentation > 0) { // Indent
 			return text.replace(/^/gm, indent);
 		}
 	}
+
+	static create (source, ...args) {
+		let ret = _.all.get(source);
+		if (!ret) {
+			ret = new _(source);
+		}
+		return ret;
+	}
 };
 
 // Static properties
-Object.assign(PrismLive, {
+Object.assign(_, {
 	all: new WeakMap(),
+	ready,
 	DEFAULT_INDENT: "\t",
 	CARET_INDICATOR: /(^|[^\\])\$(\d+)/g,
 	snippets: {
@@ -774,13 +820,19 @@ Object.assign(PrismLive, {
 		};
 		var cache = {};
 
-		return new Proxy(_regexp.bind(PrismLive, ""), {
+		return new Proxy(_regexp.bind(_, ""), {
 			get: (t, property) => {
 				return t[property] || cache[property]
-					   || (cache[property] = _regexp.bind(PrismLive, property));
+					   || (cache[property] = _regexp.bind(_, property));
 			}
 		});
 	})()
 });
 
-customElements.define("prism-live", PrismLive);
+_.supportsExecCommand = document.execCommand? undefined : false;
+
+$.ready().then(() => {
+	$$(":not(.prism-live) > textarea.prism-live, :not(.prism-live) > pre.prism-live").forEach(source => _.create(source));
+});
+
+})();

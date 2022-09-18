@@ -1,0 +1,3 @@
+prism-live > pre > code:empty::before {
+	content: " "
+}
