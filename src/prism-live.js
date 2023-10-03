@@ -145,7 +145,7 @@ var _ = Prism.Live = class PrismLive {
 						}
 					}
 				}
-				else if (_.pairs[evt.key]) {
+				else if (_.pairs[evt.key] && !evt[superKey]) {
 					var other = _.pairs[evt.key];
 					this.wrapSelection({
 						before: evt.key,
