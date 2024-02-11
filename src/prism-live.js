@@ -50,7 +50,7 @@ var _ = Prism.Live = class PrismLive {
 
 		if (this.sourceType === "textarea") {
 			this.textarea = this.source;
-			this.code = $.create("code");
+			this.code = document.createElement("code");
 
 			this.pre = $.create("pre", {
 				className: this.textarea.className + " no-whitespace-normalization",
@@ -138,7 +138,7 @@ var _ = Prism.Live = class PrismLive {
 						var snippetExpanded = this.expandSnippet(selector);
 
 						if (snippetExpanded) {
-							requestAnimationFrame(() => $.fire(this.textarea, "input"));
+							requestAnimationFrame(() => this.textarea.dispatchEvent(new InputEvent("input", {bubbles: true})));
 						}
 						else {
 							this.insert(this.indent);
