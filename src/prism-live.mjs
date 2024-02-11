@@ -516,24 +516,7 @@ export default class PrismLive {
 			return;
 		}
 
-		if (self.supportsExecCommand === true) {
-			document.execCommand("insertText", false, text);
-		}
-		else if (self.supportsExecCommand === undefined) {
-			// We still don't know if document.execCommand("insertText") is supported
-			let value = this.value;
-
-			document.execCommand("insertText", false, text);
-
-			self.supportsExecCommand = value !== this.value;
-		}
-
-		if (self.supportsExecCommand === false) {
-			this.textarea.setRangeText(text, this.selectionStart, this.selectionEnd, "end");
-			requestAnimationFrame(() => this.update());
-		}
-
-		return self.supportsExecCommand;
+		return document.execCommand("insertText", false, text);
 	}
 
 	/**
@@ -781,8 +764,6 @@ Object.assign(self, {
 		return ret;
 	})(),
 });
-
-self.supportsExecCommand = document.execCommand? undefined : false;
 
 $$(":not(.prism-live) > textarea.prism-live, :not(.prism-live) > pre.prism-live").forEach(source => self.create(source));
 
