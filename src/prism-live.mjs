@@ -4,8 +4,25 @@
 	@author Lea Verou
 */
 import { $, $$, regexp } from "./util.js";
-import { checkShortcut } from "./editing.js";
+import {
+	checkShortcut,
+	getLineBounds,
+	beforeCaretIndex,
+	beforeCaret,
+	afterCaretIndex,
+	afterCaret,
+	setCaret,
+	moveCaret,
+	deleteText,
+	matchIndentation,
+	adjustIndentation,
+} from "./editing.js";
+import {
+	getNode,
+	getOffset,
+} from "./dom.js";
 import * as env from "./env.js";
+import * as defaults from "./defaults.js";
 
 export const dependencies = [
 	"../prism-live.css",
@@ -103,7 +120,7 @@ export default class PrismLive {
 
 						this.selectionStart -= before.length;
 
-						var selection = self.adjustIndentation(this.selection, {
+						var selection = adjustIndentation(this.selection, {
 							relative: true,
 							indentation: outdent? -1 : 1
 						});
@@ -303,7 +320,7 @@ export default class PrismLive {
 	}
 
 	get indent() {
-		return this.value.match(/^[\t ]+/m)?.[0] ?? self.DEFAULT_INDENT;
+		return this.value.match(/^[\t ]+/m)?.[0] ?? defaults.indent;
 	}
 
 	get currentIndent() {
@@ -403,64 +420,34 @@ export default class PrismLive {
 	}
 
 	beforeCaretIndex (until = "") {
-		return this.value.lastIndexOf(until, this.selectionStart);
+		return beforeCaretIndex(until, this);
 	}
 
 	afterCaretIndex (until = "") {
-		return this.value.indexOf(until, this.selectionEnd);
+		return afterCaretIndex(until, this);
 	}
 
 	beforeCaret (until = "") {
-		var index = this.beforeCaretIndex(until);
-
-		if (index === -1 || !until) {
-			index = 0;
-		}
-
-		return this.value.slice(index, this.selectionStart);
+		return beforeCaret(until, this);
 	}
 
-	getLine(offset = this.selectionStart) {
-		var value = this.value;
-		var lf = "\n", cr = "\r";
-		var start, end, char;
-
-		for (var start = this.selectionStart; char = value[start]; start--) {
-			if (char === lf || char === cr || !start) {
-				break;
-			}
-		}
-
-		for (var end = this.selectionStart; char = value[end]; end++) {
-			if (char === lf || char === cr) {
-				break;
-			}
-		}
-
-		return {start, end};
+	getLine () {
+		return getLineBounds(this);
 	}
 
-	afterCaret(until = "") {
-		var index = this.afterCaretIndex(until);
-
-		if (index === -1 || !until) {
-			index = undefined;
-		}
-
-		return this.value.slice(this.selectionEnd, index);
+	afterCaret (until = "") {
+		return afterCaret(until, this);
 	}
 
-	setCaret(pos) {
-		this.selectionStart = this.selectionEnd = pos;
+	setCaret (pos) {
+		return setCaret(pos, this);
 	}
 
-	moveCaret(chars) {
-		if (chars) {
-			this.setCaret(this.selectionEnd + chars);
-		}
+	moveCaret (chars) {
+		return moveCaret(chars, this);
 	}
 
-	insert(text, {index} = {}) {
+	insert (text, {index} = {}) {
 		if (!text) {
 			return;
 		}
@@ -626,82 +613,28 @@ export default class PrismLive {
 	}
 
 	delete (characters, {forward, pos} = {}) {
-		var i = characters = characters > 0? characters : (characters + "").length;
+		let { selectionStart, selectionEnd } = deleteText(characters, {forward, pos, selectionStart: this.selectionStart, selectionEnd: this.selectionEnd});
 
-		if (pos) {
-			var selectionStart = this.selectionStart;
-			this.selectionStart = pos;
-			this.selectionEnd = pos + this.selectionEnd - selectionStart;
-		}
-
-		while (i--) {
-			document.execCommand(forward? "forwardDelete" : "delete");
-		}
-
-		if (pos) {
-			// Restore caret
-			this.selectionStart = selectionStart - characters;
-			this.selectionEnd = this.selectionEnd - pos + this.selectionStart;
-		}
+		this.setSelection(selectionStart, selectionEnd);
 	}
 
 	/**
 	 * Get the text node at a given chracter offset
 	 */
-	getNode(offset = this.selectionStart, container = this.code) {
-		var node, sum = 0;
-		var walk = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
-
-		while (node = walk.nextNode()) {
-			sum += node.data.length;
-
-			if (sum >= offset) {
-				return node;
-			}
-		}
-
-		// if here, offset is larger than maximum
-		return null;
+	getNode (offset = this.selectionStart, container = this.code) {
+		return getNode(offset, container);
 	}
 
 	/**
 	 * Get the character offset of a given node in the highlighted source
 	 */
-	getOffset(node) {
-		var range = document.createRange();
-		range.selectNodeContents(this.code);
-		range.setEnd(node, 0);
-		return range.toString().length;
+	getOffset (node) {
+		return getOffset(node, this.code);
 	}
 
 	static registerLanguage(name, context, parent = self.languages.DEFAULT) {
 		Object.setPrototypeOf(context, parent);
 		return self.languages[name] = context;
-	}
-
-	static matchIndentation(text, currentIndent) {
-		// FIXME this assumes that text has no indentation of its own
-		// to make this more generally useful beyond snippets, we should first
-		// strip text's own indentation.
-		text = text.replace(/\r?\n/g, "$&" + currentIndent);
-	}
-
-	static adjustIndentation(text, {indentation, relative = true, indent = self.DEFAULT_INDENT}) {
-		if (!relative) {
-			// First strip min indentation
-			var minIndent = text.match(regexp.gm`^(${indent})+`).sort()[0];
-
-			if (minIndent) {
-				text.replace(regexp.gm`^${minIndent}`, "");
-			}
-		}
-
-		if (indentation < 0) {
-			return text.replace(regexp.gm`^${indent}`, "");
-		}
-		else if (indentation > 0) { // Indent
-			return text.replace(/^/gm, indent);
-		}
 	}
 
 	static create (source, ...args) {
@@ -719,7 +652,7 @@ let self = Prism.Live = PrismLive;
 Object.assign(self, {
 	all: new WeakMap(),
 	ready,
-	DEFAULT_INDENT: "\t",
+	DEFAULT_INDENT: defaults.indent,
 	CARET_INDICATOR: /(^|[^\\])\$(\d+)/g,
 	snippets: {
 		"test": "Snippets work!",
