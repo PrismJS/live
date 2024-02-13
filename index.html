@@ -12,7 +12,7 @@
 			background: black;
 		}
 	</style>
-	
+
 	<script>
 
 	</script>
@@ -34,7 +34,7 @@
 
 		<h3>Height grows with code / HTML editing</h3>
 		<textarea class="prism-live language-html fill"></textarea>
-		
+
 		<h3>Supports line-numbers</h3>
 		<textarea class="prism-live line-numbers language-html fill"></textarea>
 
@@ -50,8 +50,24 @@
 	<section>
 		<h2>Including the library</h2>
 
+		<h3>ESM</h3>
+
 		<p>You will need to include Prism before including Prism Live.
-			You will also need to include Bliss, though if you don’t it will be loaded dynamically.
+			You can either manually include <code>prism-live.css</code> yourself, and import <code>prism-live.js</code> and any language components,
+			and then call <code>PrismLive.registerLanguage(id, lang)</code>
+			or you can use the built-in dynamic loader and just include <code>prism-live.mjs</code> with a <code>load</code> parameter
+			about which components to include.
+		</p>
+		<p>For example, to include definitions for CSS, HTML, and JS:</p>
+		<pre class="language-html"><code>&lt;script src="prism-live.mjs?load=css,html,javascript">&lt;/script></code></pre>
+		<p>or in JS:</p>
+		<pre class="language-js"><code>import PrismLive from "prism-live.mjs?load=css,html,javascript";</code></pre>
+
+		<p>Using the <code>load</code> parameter also automatically includes <code>prism-live.css</code>, regardless of the value.</p>
+
+		<h3>Non-ESM</h3>
+
+		<p>You will need to include Prism before including Prism Live.
 			You can either manually include <code>prism-live.css</code>, <code>prism-live.js</code> and any language components,
 			or you can use the built-in dynamic loader and just include <code>prism-live.js</code> with a <code>load</code> parameter
 			about which components to include.
@@ -93,9 +109,6 @@
 <script src="https://prismjs.com/prism.js"></script>
 <script src="https://prismjs.com/plugins/line-numbers/prism-line-numbers.js"></script>
 <script src="src/prism-live.js"></script>
-<script src="src/prism-live-markup.js"></script>
-<script src="src/prism-live-css.js"></script>
-<script src="src/prism-live-javascript.js"></script>
 <script src="index.js"></script>
 
 </body>

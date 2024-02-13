@@ -25,7 +25,7 @@ import * as env from "./env.js";
 import * as defaults from "./defaults.js";
 
 export const dependencies = [
-	"../prism-live.css",
+	$.load(new URL("../prism-live.css", import.meta.url)),
 ];
 
 let url = new URL(import.meta.url);
@@ -37,11 +37,27 @@ if (urlParams.has("load")) {
 
 	if (load !== null) {
 		let ids = load.split(/,/);
-		dependencies.push(...ids.map(c => `./prism-live-${c}.js`));
+		dependencies.push(...ids.map(c => import(`./prism-live-${c}.mjs`).then(m => {
+			if (m.default) {
+				PrismLive.registerLanguage(m.default.id, m.default);
+			}
+			else {
+				for (let id in m) {
+					if (PrismLive.languages[id]) {
+						// Already registered, augment it
+						Object.assign(PrismLive.languages[id], m[id]);
+					}
+					else {
+						PrismLive.registerLanguage(id, m[id]);
+					}
+
+				}
+			}
+		})));
 	}
 }
 
-export const ready = Promise.all(dependencies.map(u => $.load(u, url)));
+export const ready = Promise.all(dependencies);
 
 export default class PrismLive {
 	constructor(source) {
@@ -646,7 +662,7 @@ export default class PrismLive {
 	}
 };
 
-let self = Prism.Live = PrismLive;
+let self = PrismLive;
 
 // Static properties
 Object.assign(self, {

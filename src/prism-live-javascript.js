@@ -1,17 +1,7 @@
-Prism.Live.registerLanguage("clike", {
-	comments: {
-		singleline: "//",
-		multiline: ["/*", "*/"]
-	},
-	snippets: {
-		if: `if ($1) {
-	$2
-}`
+(async () => {
+	const PrismLive = globalThis?.Prism?.Live ?? (await import("./prism-live.mjs")).default;
+	const m = await import("./prism-live-css.mjs");
+	for (const key in m) {
+		PrismLive.registerLanguage(key, m[key]);
 	}
-});
-
-Prism.Live.registerLanguage("javascript", {
-	snippets: {
-		log: "console.log($1)",
-	}
-}, Prism.Live.languages.clike);
+})();
