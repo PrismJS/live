@@ -14,7 +14,7 @@ $$("textarea.language-css.fill").forEach(t => {
 	t.dispatchEvent(new InputEvent("input"));
 });
 
-var js = await fetch("src/prism-live.js");
+var js = await fetch("src/prism-live.mjs");
 js = await js.text();
 
 $$("textarea.language-js.fill").forEach(t => {
