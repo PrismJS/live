@@ -28,7 +28,7 @@ export const regexp = new Proxy(_regexp.bind(this, ""), {
 
 export function loadLanguages (ids, PrismLive) {
 	ids = Array.isArray(ids) ? ids : ids.split(/,/);
-	return ids.map(c => import(`./prism-live-${c}.mjs`).then(m => {
+	return ids.map(c => import(`./languages/${c}.mjs`).then(m => {
 		if (m.default) {
 			PrismLive.registerLanguage(m.default.id, m.default);
 		}
