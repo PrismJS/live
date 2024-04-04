@@ -17,7 +17,7 @@ export function checkShortcut (shortcut, evt) {
 const LF = "\n";
 const CR = "\r";
 
-export function getLineBounds (context) {
+export function getLineBounds (context = this) {
 	var value = context.value;
 	var start, end, char;
 
@@ -36,15 +36,15 @@ export function getLineBounds (context) {
 	return {start, end};
 }
 
-export function beforeCaretIndex (until = "", context) {
-	return this.value.lastIndexOf(until, context.selectionStart);
+export function beforeCaretIndex (until = "", context = this) {
+	return context.value.lastIndexOf(until, context.selectionStart);
 }
 
-export function afterCaretIndex (until = "", context) {
+export function afterCaretIndex (until = "", context = this) {
 	return context.value.indexOf(until, context.selectionEnd);
 }
 
-export function beforeCaret (until = "", context) {
+export function beforeCaret (until = "", context = this) {
 	var index = beforeCaretIndex(until, context);
 
 	if (index === -1 || !until) {
@@ -54,7 +54,7 @@ export function beforeCaret (until = "", context) {
 	return context.value.slice(index, context.selectionStart);
 };
 
-export function afterCaret (until = "", context) {
+export function afterCaret (until = "", context = this) {
 	var index = afterCaretIndex(until);
 
 	if (index === -1 || !until) {
@@ -64,11 +64,11 @@ export function afterCaret (until = "", context) {
 	return this.value.slice(context.selectionEnd, index);
 }
 
-export function setCaret (pos, context) {
+export function setCaret (pos, context = this) {
 	context.selectionStart = context.selectionEnd = pos;
 }
 
-export function moveCaret (chars, context) {
+export function moveCaret (chars, context = this) {
 	if (chars) {
 		context.setCaret(context.selectionEnd + chars);
 	}
