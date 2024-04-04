@@ -24,24 +24,6 @@ import {
 import * as env from "./env.js";
 import * as defaults from "./defaults.js";
 
-export const dependencies = [
-	$.load(new URL("../prism-live.css", import.meta.url)),
-];
-
-let url = new URL(import.meta.url);
-let urlParams = url.searchParams;
-
-if (urlParams.has("load")) {
-	// Tiny dynamic loader. Use e.g. ?load=css,markup,javascript to load components
-	let load = urlParams.get("load");
-	if (load !== null) {
-		let promises = loadLanguages(load, PrismLive);
-		dependencies.push(...promises);
-	}
-}
-
-export const ready = Promise.all(dependencies);
-
 export default class PrismLive {
 	constructor(source) {
 		this.source = source;
@@ -650,7 +632,6 @@ let self = PrismLive;
 // Static properties
 Object.assign(self, {
 	all: new WeakMap(),
-	ready,
 	DEFAULT_INDENT: defaults.indent,
 	CARET_INDICATOR: /(^|[^\\])\$(\d+)/g,
 	snippets: {
@@ -696,6 +677,25 @@ Object.assign(self, {
 		return ret;
 	})(),
 });
+
+export const dependencies = [
+	$.load(new URL("../prism-live.css", import.meta.url)),
+];
+
+let url = new URL(import.meta.url);
+let urlParams = url.searchParams;
+
+if (urlParams.has("load")) {
+	// Tiny dynamic loader. Use e.g. ?load=css,markup,javascript to load components
+	let load = urlParams.get("load");
+	if (load !== null) {
+		let promises = loadLanguages(load, PrismLive);
+		dependencies.push(...promises);
+	}
+}
+
+export const ready = Promise.all(dependencies);
+self.ready = ready;
 
 $$(":not(.prism-live) > textarea.prism-live, :not(.prism-live) > pre.prism-live").forEach(source => self.create(source));
 
