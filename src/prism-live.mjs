@@ -628,6 +628,7 @@ export default class PrismLive {
 };
 
 let self = PrismLive;
+Prism.Live ??= PrismLive;
 
 // Static properties
 Object.assign(self, {
