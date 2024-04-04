@@ -1,6 +1,6 @@
 
 {
-	let url;
+	let url, importURL = "./prism-live.mjs";
 	// Fall back to loading all languages
 	let search = "?load=css,javascript,markup";
 
@@ -11,7 +11,8 @@
 
 	if (url) {
 		search = new URL(url).search;
+		importURL = new URL(importURL, url).href;
 	}
 
-	import("./prism-live.mjs" + search).then(m => Prism.Live = m.default);
+	import(importURL).then(m => Prism.Live = m.default);
 }

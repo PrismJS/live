@@ -25,3 +25,25 @@ export const regexp = new Proxy(_regexp.bind(this, ""), {
 				|| (cache[property] = _regexp.bind(this, property));
 	}
 });
+
+export function loadLanguages (ids, PrismLive) {
+	ids = Array.isArray(ids) ? ids : ids.split(/,/);
+	return ids.map(c => import(`./prism-live-${c}.mjs`).then(m => {
+		if (m.default) {
+			PrismLive.registerLanguage(m.default.id, m.default);
+		}
+		else {
+			// Many languages
+			for (let id in m) {
+				if (PrismLive.languages[id]) {
+					// Already registered, augment it
+					Object.assign(PrismLive.languages[id], m[id]);
+				}
+				else {
+					PrismLive.registerLanguage(id, m[id]);
+				}
+
+			}
+		}
+	}));
+}

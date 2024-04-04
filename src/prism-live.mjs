@@ -3,7 +3,7 @@
 	Works best in Chrome. Currently only very basic support in other browsers (no snippets, no shortcuts)
 	@author Lea Verou
 */
-import { $, $$, regexp } from "./util.js";
+import { $, $$, regexp, loadLanguages } from "./util.js";
 import {
 	checkShortcut,
 	getLineBounds,
@@ -34,26 +34,9 @@ let urlParams = url.searchParams;
 if (urlParams.has("load")) {
 	// Tiny dynamic loader. Use e.g. ?load=css,markup,javascript to load components
 	let load = urlParams.get("load");
-
 	if (load !== null) {
-		let ids = load.split(/,/);
-		dependencies.push(...ids.map(c => import(`./prism-live-${c}.mjs`).then(m => {
-			if (m.default) {
-				PrismLive.registerLanguage(m.default.id, m.default);
-			}
-			else {
-				for (let id in m) {
-					if (PrismLive.languages[id]) {
-						// Already registered, augment it
-						Object.assign(PrismLive.languages[id], m[id]);
-					}
-					else {
-						PrismLive.registerLanguage(id, m[id]);
-					}
-
-				}
-			}
-		})));
+		let promises = loadLanguages(load, PrismLive);
+		dependencies.push(...promises);
 	}
 }
 
