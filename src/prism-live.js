@@ -10,8 +10,8 @@
 	catch(e) {}
 
 	if (url) {
-		search = new URL(url).search;
-		importURL = new URL(importURL, url).href;
+		importURL = new URL(importURL, url);
+		importURL.search = new URL(url).search ?? search;
 	}
 
 	import(importURL).then(m => Prism.Live = m.default);
